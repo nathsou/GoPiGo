@@ -1,0 +1,22 @@
+{
+    "name": "server",
+    "version": "0.0.0",
+    "description": "GoPiGo Web Controller",
+    "main": "app.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "dependencies": {
+      "express": "~4.15.4",
+      "nipplejs": "^0.6.7",
+      "node-gopigo": "~2.0.5",
+      "socket.io": "~2.0.3",
+      "python-shell": "~0.4.0",
+      "remove-accents": "~0.4.1",
+      "alertifyjs": "~1.11.0",
+      "ws": "~3.2.0",
+      "stream-split": "~1.1.0"
+    },
+    "author": "Nathan Soufflet",
+    "license": "ISC"
+  }

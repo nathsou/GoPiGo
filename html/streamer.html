@@ -1,0 +1,61 @@
+
+<html>
+    <head>
+      <title>Pi Camera</title>
+        <style>
+            body { margin: 0; }
+            canvas { width: 100%; height: 100% }
+        </style>
+    </head>
+    <body>
+  
+      <button id='start'>Start Video</button>
+      <button id='stop' onclick="wsavc.stopStream()">Stop Video</button>
+      <button id='disconnect'>Disconnect</button>
+      <br/>
+  
+      <script type="text/javascript" src="http-live-player.js">;</script>
+      <script>
+  
+        document.addEventListener('DOMContentLoaded', () => {
+
+            var cnv = document.createElement("canvas");
+            document.body.appendChild(cnv);
+            
+            // Create h264 player
+            var uri = 'ws://' + document.location.host;
+            var wsavc = new WSAvcPlayer(cnv, "webgl", 1, 35);
+
+            wsavc.on('canvasReady', e => {
+
+
+
+                wsavc.ws.onopen = v => {
+                    console.log('open ' + v);
+                };
+
+                wsavc.ws.onclose = v => {
+                    console.log('close ' + v);
+                };
+            })
+
+            wsavc.connect(uri);
+
+            document.getElementById('start').addEventListener('click', e => {
+                wsavc.playStream();
+            });
+
+            document.getElementById('stop').addEventListener('click', e => {
+                wsavc.stopStream();
+            });
+
+            document.getElementById('disconnect').addEventListener('click', e => {
+                wsavc.disconnect();
+            });
+            
+            window.wsavc = wsavc;
+        });
+  
+      </script>
+    </body>
+  </html>

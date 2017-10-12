@@ -1,0 +1,229 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Programmer le GoPiGo2</title>
+
+  <script src="../socket.io/socket.io.js"></script>
+  <script src="../node_modules/alertifyjs/build/alertify.min.js"></script>
+  <script src="../blockly/blockly_compressed.js"></script>
+
+  <script src="../blockly/generators/python.js"></script>
+  <script src="../blockly/generators/python/actuators.js"></script>
+  <script src="../blockly/generators/python/captors.js"></script>
+  <script src="../blockly/generators/python/colour.js"></script>
+  <script src="../blockly/generators/python/gopigo.js"></script>
+  <script src="../blockly/generators/python/lists.js"></script>
+  <script src="../blockly/generators/python/logic.js"></script>
+  <script src="../blockly/generators/python/loops.js"></script>
+  <script src="../blockly/generators/python/math.js"></script>
+  <script src="../blockly/generators/python/procedures.js"></script>
+  <script src="../blockly/generators/python/text.js"></script>
+  <script src="../blockly/generators/python/variables.js"></script>
+
+  <script src="../blockly/blocks/actuators.js"></script>
+  <script src="../blockly/blocks/captors.js"></script>
+  <script src="../blockly/blocks/colour.js"></script>
+  <script src="../blockly/blocks/lists.js"></script>
+  <script src="../blockly/blocks/gopigo.js"></script>
+  <script src="../blockly/blocks/logic.js"></script>
+  <script src="../blockly/blocks/loops.js"></script>
+  <script src="../blockly/blocks/math.js"></script>
+  <script src="../blockly/blocks/procedures.js"></script>
+  <script src="../blockly/blocks/text.js"></script>
+  <script src="../blockly/blocks/variables.js"></script>
+
+  <script src="../blockly/msg/js/fr.js"></script>
+
+  <link rel="stylesheet" href="../node_modules/alertifyjs/build/css/alertify.min.css" />
+  <!-- include a theme -->
+  <link rel="stylesheet" href="../node_modules/alertifyjs/build/css/themes/default.min.css" />
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    body {
+      background-color: #fff;
+      font-family: sans-serif;
+      overflow: hidden;
+    }
+
+    #blocklyArea {
+      height: 100%;
+      width: 100%;
+    }
+
+    #blocklyDiv {
+      height: 100%;
+      width: 100%;
+    }
+
+    #gopigo_status_bar {}
+
+    #run_on_gopigo {
+        border-radius: 0px;
+    }
+
+    #stop_gopigo {
+        border-radius: 0px;
+    }
+    
+  </style>
+</head>
+<body>
+      <div id="gopigo_status_bar">
+          <button id='run_on_gopigo'>envoyer au robot</button>
+          <button id='stop_gopigo'>arrêter</button>
+      </div>
+
+      <div id="blocklyArea"></div>
+
+  <div id="blocklyDiv" style="position: absolute"></div>
+
+  <xml id="toolbox" style="display: none">
+        
+          <category name="Robot" colour="#CC3333">
+          
+              <block type="gopigo_drive_x_units_ext"></block>
+              <block type="gopigo_direction"></block>
+              <block type="gopigo_drive_untilwhile"></block>
+              <block type="gopigo_change_speed"></block>
+              <block type="gopigo_set_speed_to_ext"></block>
+              <block type="gopigo_stop"></block>
+              <sep gap=25></sep>
+
+              <block type="gopigo_turn_timebased_ext"></block>
+              <block type="gopigo_turn"></block>
+              <block type="gopigo_turn_untilwhile"></block>
+              <sep gap=25></sep>
+
+              <block type="gopigo_led_control"></block>
+              <block type="gopigo_wait_ext"></block>
+            
+          </category>
+        
+          <category name="Actuateurs" colour="#A52022">
+              <block type="actuator_set_servo_ext"></block>
+              <block type="actuator_center_servo"></block>    
+          
+          </category>
+        
+          <category name="Capteurs" colour="#562E8A">
+              <block type="picam_take_photo"></block>
+          </category>
+        
+          <category name="Logique" colour="#6E973F">
+              <block type="controls_if"></block>
+              <block type="controls_ifelse"></block>
+              <block type="logic_compare"></block>
+              <block type="logic_operation"></block>
+              <block type="logic_negate"></block>
+              <block type="logic_boolean"></block>
+          </category>
+
+          <category name="Boucles" colour="#9ECD5C">
+              <block type="controls_repeat"></block>
+              <block type="controls_whileUntil"></block>
+              <block type="controls_flow_statements"></block>
+          </category>
+    
+          <category name="Maths" colour="#005395">
+              <block type="math_number"></block>
+              <block type="math_arithmetic"></block>
+              <block type="math_random_float"></block>
+              <block type="math_single"></block>
+              <block type="math_trig"></block>
+              <block type="math_constant"></block>
+              <block type="math_number_property"></block>
+              <block type="math_round"></block>
+              <block type="math_on_list"></block>
+              <block type="math_modulo"></block>
+              <block type="math_constrain"></block>
+          </category>
+    
+          <category name="Texte" colour="#193863">
+                <block type="text_print"></block>
+                <block type="text"></block>
+                <block type="text_join"></block>
+          </category>
+
+          <category name="Variables" custom="VARIABLE" colour="#34495e"></category>
+          <category name="Fonctions" custom="PROCEDURE" colour="7f8c8d"></category>
+          
+
+    </xml>
+
+
+
+  <script>
+
+    var socket = io.connect('');
+
+    var blocklyArea = document.getElementById('blocklyArea');
+    var blocklyDiv = document.getElementById('blocklyDiv');
+
+    var workspace = Blockly.inject('blocklyDiv',{
+        toolbox: document.getElementById('toolbox'),
+        grid: {
+            spacing: 25,
+            length: 3,
+            colour: '#ccc',
+            snap: true
+        },
+        trashcan: true,
+        media: '../blockly/media/',
+        scrollbars: true,
+        zoom: {
+            controls: true,
+            startScale: 1.0,
+            maxScale: 3,
+            scaleSpeed: 1.2,
+            wheel: false
+        }
+    });
+
+    var onresize = function(e) {
+        console.log('resize');
+      // Compute the absolute coordinates and dimensions of blocklyArea.
+      var element = blocklyArea;
+      var x = 0;
+      var y = 0;
+      do {
+        x += element.offsetLeft;
+        y += element.offsetTop;
+        element = element.offsetParent;
+      } while (element);
+      // Position blocklyDiv over blocklyArea.
+      blocklyDiv.style.left = x + 'px';
+      blocklyDiv.style.top = y + 'px';
+      blocklyDiv.style.width = blocklyArea.offsetWidth + 'px';
+      blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
+    };
+
+    window.addEventListener('resize', onresize, false);
+    onresize();
+    Blockly.svgResize(workspace);
+
+    document.getElementById('run_on_gopigo').addEventListener('click', e => {
+        socket.emit('run_python_program', Blockly.Python.workspaceToCode(workspace));
+    });
+
+    document.getElementById('stop_gopigo').addEventListener('click', e => {
+        socket.emit('stop_python_program');
+    }); 
+
+    socket.on('python_print', msg => {
+        alertify.message(msg);
+        console.info(msg);
+    });
+
+    socket.on('picam', () => {
+        alertify.alert('picam', '<center><img style="height:250px;" src="cam.jpg?t=' + new Date().getTime() + '"/></<center>');
+    });
+
+  </script>
+</body>
+</html>
